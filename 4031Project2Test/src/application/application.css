@@ -1,1 +1,8 @@
-/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+/* CSS file for application, mostly for things javaFX related */
+
+#GenText {
+	-fx-font-family: 'Lucida Sans Unicode';
+	-fx-font-size: 11pt;
+    -fx-stroke: black;
+    -fx-stroke-width: 0;	
+}

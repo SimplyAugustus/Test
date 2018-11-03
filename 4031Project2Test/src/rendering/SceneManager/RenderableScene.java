@@ -20,7 +20,7 @@ public abstract class RenderableScene {
 	// Name of this scene
 	public String name = "";
 
-	public boolean init(SceneManager sm, double Width, double Height, String name, CommunicationManager comms){
+	public boolean init(SceneManager sm, double Width, double Height, String name){
 		
 		// Init the Scene and group node
 		root = new Group();
@@ -50,9 +50,6 @@ public abstract class RenderableScene {
 	
 	// Setup the group node
 	public abstract void setupNode();
-	
-	// Frame by Frame update
-	public abstract void update(double deltaTime);
 	
 	// Mouse updates
 	public abstract void mouseUpdate(MouseEvent event);

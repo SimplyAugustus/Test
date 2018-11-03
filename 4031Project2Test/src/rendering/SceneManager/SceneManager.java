@@ -3,7 +3,7 @@ package rendering.SceneManager;
 import java.util.*;
 
 import application.Main;
-//import config.AppVar;
+import config.AppVar;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import rendering.MainScene;
@@ -24,35 +24,19 @@ public class SceneManager {
 	private MainScene mainScene;
 	
 	
-	public boolean init (double Width, double Height, Stage primaryStage, String cssfile, CommunicationManager comms)
+	public boolean init (double Width, double Height, Stage primaryStage, String cssfile)
 	{
 		renderingResX = Double.parseDouble(AppVar.getVar("renderingResX"));
 		renderingResY = Double.parseDouble(AppVar.getVar("renderingResY"));
 		
 		SceneList = new ArrayList<RenderableScene>();
-		
-		// Communication
-		this.comms = comms;
-		
+			
 		SceneManager.primaryStage = primaryStage;
 		
 		mainScene = new MainScene();
-		mainScene.init(this, Width, Height, "Main", comms);
-		
-		editorScene = new EditorScene();
-		editorScene.init(this, Width, Height, "Edit", comms);
-		
-		explorationScene = new ExplorationScene();
-		explorationScene.init(this, Width, Height, "Exploration", comms);
-		
-		fastestPathScene = new FastestPathScene();
-		fastestPathScene.init(this, Width, Height, "Fastest Path", comms);
-		
+		mainScene.init(this, Width, Height, "Main");
 		
 		addScene(mainScene, cssfile);
-		addScene(editorScene, cssfile);
-		addScene(explorationScene, cssfile);
-		addScene(fastestPathScene, cssfile);
 		changeScene("Main");
 		return true;
 	}
