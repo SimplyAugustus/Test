@@ -29,12 +29,13 @@ public class Diagram {
 
 	private Text QueryText, ShowQueryText, BoxText, InstructionText;
 	private TextArea QueryTextArea;
-	private HBox QueryBox, NodeBox;
+	private HBox NodeBox;
 	private VBox DiagramBox;
 	private Rectangle BoxRectangle;
-	private Group QueryArea;
+	private Group QueryArea, QueryTextGroup, InstructionTextGroup, QueryTextAreaGroup,
+	QueryButtonGroup, ResetButtonGroup, LineGroup, StackGroup, NodeGroup;
 	private Button QueryButton, ResetButton;
-	private ScrollPane Scroll;
+	private ScrollPane scrollPane;
 	private Line Line;
 	private String instructionText;
 
@@ -52,7 +53,7 @@ public class Diagram {
 		
 		DiagramBox = new VBox();
 		
-		ScrollPane scrollPane = new ScrollPane();
+		scrollPane = new ScrollPane();
 		scrollPane.setContent(DiagramBox);
 		scrollPane.setFitToWidth(true);
 		scrollPane.setTranslateX(SceneManager.scaledX(20));
@@ -60,27 +61,33 @@ public class Diagram {
 		scrollPane.setPrefViewportHeight(800);
 		scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		scrollPane.setPannable(true); 
-
+		
 		QueryText = new Text();
 		QueryText.setId("QueryText");
 		QueryText.setText("Enter query:");
 		QueryText.setStyle("-fx-font: 20 calibri;");
-		QueryText.setTranslateX(SceneManager.scaledX(0));
-		QueryText.setTranslateY(SceneManager.scaledY(0));
-
-		QueryTextArea = new TextArea();
-		QueryTextArea.setId("QueryText");
-		QueryTextArea.setWrapText(true);
-		QueryTextArea.setPrefColumnCount(35);
-		QueryTextArea.setPrefRowCount(15);
-		QueryTextArea.setTranslateX(SceneManager.scaledX(-130));
-		QueryTextArea.setTranslateY(SceneManager.scaledY(50));
-
+		
+		QueryTextGroup = new Group();
+		QueryTextGroup.getChildren().add(QueryText);
+		QueryTextGroup.setTranslateX(SceneManager.scaledX(-132));
+		QueryTextGroup.setTranslateY(SceneManager.scaledY(0));
+		
+		ResetButton = new Button("Reset");
+		ResetButton.setScaleX(SceneManager.scaledX(2));
+		ResetButton.setScaleY(SceneManager.scaledY(2));
+		ResetButton.setOnAction(actionEvent -> {
+			root.getChildren().clear();
+			init(root);
+		});
+		
+		ResetButtonGroup = new Group();
+		ResetButtonGroup.getChildren().add(ResetButton);
+		ResetButtonGroup.setTranslateX(SceneManager.scaledX(5));
+		ResetButtonGroup.setTranslateY(SceneManager.scaledY(100));
+		
 		QueryButton = new Button("Submit");
 		QueryButton.setScaleX(SceneManager.scaledX(2));
 		QueryButton.setScaleY(SceneManager.scaledY(2));
-		QueryButton.setTranslateX(SceneManager.scaledX(-830));
-		QueryButton.setTranslateY(SceneManager.scaledY(150));
 		QueryButton.setOnAction(actionEvent -> {
 			
 //			ShowQueryText.setText(QueryTextArea.getText());
@@ -135,11 +142,15 @@ public class Diagram {
 
 				Tooltip.install(stack, new Tooltip(stepDetail));
 				stack.getChildren().addAll(BoxRectangle, BoxText);
-
-				NodeBox = new HBox();
-				NodeBox.getChildren().addAll(stack);
-				NodeBox.setTranslateX(SceneManager.scaledX(460));
-				NodeBox.setTranslateY(SceneManager.scaledY(0));
+				
+				StackGroup = new Group();
+				StackGroup.getChildren().addAll(stack);
+				StackGroup.setTranslateX(SceneManager.scaledX(0));
+				StackGroup.setTranslateY(SceneManager.scaledY(50));
+				
+				NodeGroup = new Group();
+				NodeGroup.setTranslateX(SceneManager.scaledX(460));
+				NodeGroup.setTranslateY(SceneManager.scaledY(0));
 
 				if (j != (i - 2)) {
 					Line = new Line();
@@ -147,50 +158,65 @@ public class Diagram {
 					Line.setStartY(0.0f);
 					Line.setEndX(0.0f);
 					Line.setEndY(50.0f);
-					Line.setTranslateX(SceneManager.scaledX(530));
-					Line.setTranslateY(SceneManager.scaledY(0));
-					DiagramBox.getChildren().addAll(NodeBox, Line);
+
+					LineGroup = new Group();
+					LineGroup.getChildren().addAll(Line);
+					LineGroup.setTranslateX(SceneManager.scaledX(68));
+					LineGroup.setTranslateY(SceneManager.scaledY(113));
+					
+					NodeGroup.getChildren().addAll(StackGroup, LineGroup);
+					
 				} else {
-					DiagramBox.getChildren().add(NodeBox);
+					NodeGroup.getChildren().add(StackGroup);
 				}
+				
+				DiagramBox.getChildren().add(NodeGroup);
 				j++;
 			}
 
 			root.getChildren().add(scrollPane);
 			
 		});
-
-		ResetButton = new Button("Reset");
-		ResetButton.setScaleX(SceneManager.scaledX(2));
-		ResetButton.setScaleY(SceneManager.scaledY(2));
-		ResetButton.setTranslateX(SceneManager.scaledX(-896));
-		ResetButton.setTranslateY(SceneManager.scaledY(250));
-		ResetButton.setOnAction(actionEvent -> {
-			root.getChildren().clear();
-			init(root);
-		});
+		
+		QueryButtonGroup = new Group();
+		QueryButtonGroup.getChildren().addAll(QueryButton, ResetButtonGroup);
+		QueryButtonGroup.setTranslateX(SceneManager.scaledX(530));
+		QueryButtonGroup.setTranslateY(SceneManager.scaledY(150));
 		
 		InstructionText = new Text(instructionText);
 		InstructionText.setId("InstructionText");
 		InstructionText.setStyle("-fx-font: 16 calibri;");
-		InstructionText.setTranslateX(SceneManager.scaledX(-695));
-		InstructionText.setTranslateY(SceneManager.scaledY(500));
-
+		
+		InstructionTextGroup = new Group();
+		InstructionTextGroup.getChildren().add(InstructionText);
+		InstructionTextGroup.setTranslateX(SceneManager.scaledX(-130));
+		InstructionTextGroup.setTranslateY(SceneManager.scaledY(500));
+		
+		QueryTextArea = new TextArea();
+		QueryTextArea.setId("QueryText");
+		QueryTextArea.setWrapText(true);
+		QueryTextArea.setPrefColumnCount(35);
+		QueryTextArea.setPrefRowCount(15);
+		QueryTextArea.setTranslateX(SceneManager.scaledX(-130));
+		QueryTextArea.setTranslateY(SceneManager.scaledY(50));
+		
+		QueryTextAreaGroup = new Group();
+		QueryTextAreaGroup.getChildren().addAll(QueryTextArea, QueryTextGroup, InstructionTextGroup, QueryButtonGroup);
+		QueryTextAreaGroup.setTranslateX(SceneManager.scaledX(0));
+		QueryTextAreaGroup.setTranslateY(SceneManager.scaledY(0));
+		
+		
 //		ShowQueryText = new Text();
 //		ShowQueryText.setId("ShowQueryText");
 //		ShowQueryText.setStyle("-fx-font: 16 calibri;");
 //		ShowQueryText.setTranslateX(SceneManager.scaledX(-695));
 //		ShowQueryText.setTranslateY(SceneManager.scaledY(500));
 		
-		QueryBox = new HBox();
-		QueryBox.getChildren().addAll(QueryText, QueryTextArea, InstructionText, QueryButton, ResetButton);
-		QueryBox.setTranslateX(SceneManager.scaledX(80));
-		QueryBox.setTranslateY(SceneManager.scaledY(50));
 
 		QueryArea = new Group();
-		QueryArea.getChildren().add(QueryBox);
-		QueryArea.setTranslateX(SceneManager.scaledX(1000));
-		QueryArea.setTranslateY(SceneManager.scaledY(0));
+		QueryArea.getChildren().add(QueryTextAreaGroup);
+		QueryArea.setTranslateX(SceneManager.scaledX(1200));
+		QueryArea.setTranslateY(SceneManager.scaledY(100));
 
 		root.getChildren().add(QueryArea);
 	}
