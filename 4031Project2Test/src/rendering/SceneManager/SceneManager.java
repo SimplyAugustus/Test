@@ -15,6 +15,8 @@ public class SceneManager {
 	
 	public static double renderingResX;
 	public static double renderingResY;
+	public static double primaryResX;
+	public static double primaryResY;
 	
 	public RenderableScene curScene;
 	
@@ -28,6 +30,9 @@ public class SceneManager {
 	{
 		renderingResX = Double.parseDouble(AppVar.getVar("renderingResX"));
 		renderingResY = Double.parseDouble(AppVar.getVar("renderingResY"));
+		
+		primaryResX = Double.parseDouble(AppVar.getVar("primaryResX"));
+		primaryResY = Double.parseDouble(AppVar.getVar("primaryResY"));
 		
 		SceneList = new ArrayList<RenderableScene>();
 			
@@ -70,12 +75,12 @@ public class SceneManager {
 	
 	// For scaling so that rendering will look the same on different coms
 	public static double scaledX(double X)
-	{
-		return X / renderingResX * primaryStage.getWidth();
+	{	
+		return X / renderingResX * primaryResX;
 	}
 	
 	public static double scaledY(double Y)
 	{
-		return Y / renderingResY * primaryStage.getHeight();
+		return Y / renderingResY * primaryResY;
 	}
 }

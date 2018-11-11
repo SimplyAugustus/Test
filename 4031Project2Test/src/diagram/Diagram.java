@@ -10,7 +10,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import javafx.scene.text.TextFlow;
 import javafx.scene.paint.Color;
+import javafx.collections.ObservableList;
 import javafx.scene.Group;
 import rendering.SceneManager.SceneManager;
 import diagram.Diagram;
@@ -27,13 +30,13 @@ import config.AppVar;
 
 public class Diagram {
 
-	private Text QueryText, ShowQueryText, BoxText, InstructionText;
+	private Text QueryText, EnteredQueryText, BoxText, InstructionText;
 	private TextArea QueryTextArea;
 	private HBox NodeBox;
 	private VBox DiagramBox;
 	private Rectangle BoxRectangle;
 	private Group QueryArea, QueryTextGroup, InstructionTextGroup, QueryTextAreaGroup,
-	QueryButtonGroup, ResetButtonGroup, LineGroup, StackGroup, NodeGroup;
+	QueryButtonGroup, ResetButtonGroup, LineGroup, StackGroup, NodeGroup, HighlightedQueryGroup, EnteredQueryTextGroup;
 	private Button QueryButton, ResetButton;
 	private ScrollPane scrollPane;
 	private Line Line;
@@ -46,21 +49,18 @@ public class Diagram {
 
 	private Stack<String> Queries = new Stack<String>();
 	private String Result = new String();
+	private boolean reset = false;
+	private TextFlow textFlowPlane = new TextFlow();
+	private boolean afterBracket = false;
 
+	
 	public void init(Group root) {
 		
 		instructionText = AppVar.getVar("instruction");
 		
 		DiagramBox = new VBox();
 		
-		scrollPane = new ScrollPane();
-		scrollPane.setContent(DiagramBox);
-		scrollPane.setFitToWidth(true);
-		scrollPane.setTranslateX(SceneManager.scaledX(20));
-		scrollPane.setPrefViewportWidth(780);
-		scrollPane.setPrefViewportHeight(800);
-		scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-		scrollPane.setPannable(true); 
+		
 		
 		QueryText = new Text();
 		QueryText.setId("QueryText");
@@ -76,8 +76,12 @@ public class Diagram {
 		ResetButton.setScaleX(SceneManager.scaledX(2));
 		ResetButton.setScaleY(SceneManager.scaledY(2));
 		ResetButton.setOnAction(actionEvent -> {
+			reset = true;
+			connect();
 			root.getChildren().clear();
+			textFlowPlane.getChildren().clear();
 			init(root);
+			QueryButton.setDisable(false);
 		});
 		
 		ResetButtonGroup = new Group();
@@ -89,6 +93,18 @@ public class Diagram {
 		QueryButton.setScaleX(SceneManager.scaledX(2));
 		QueryButton.setScaleY(SceneManager.scaledY(2));
 		QueryButton.setOnAction(actionEvent -> {
+			
+			QueryButton.setDisable(true);
+			
+			scrollPane = new ScrollPane();
+			scrollPane.setContent(DiagramBox);
+			scrollPane.setFitToWidth(true);
+			scrollPane.setTranslateX(SceneManager.scaledX(20));
+			scrollPane.setPrefViewportWidth(780);
+			scrollPane.setPrefViewportHeight(800);
+			scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+			scrollPane.setPannable(true); 
+			
 			
 //			ShowQueryText.setText(QueryTextArea.getText());
 			connect();
@@ -139,17 +155,39 @@ public class Diagram {
 				BoxRectangle.setStroke(Color.BLACK);
 
 				BoxText = new Text(stepNode);
-
+				
+				switch(stepNode) {
+					case " Sort":
+						BoxText.setFill(Color.BLUE);
+						System.out.println("Setting Blue");
+						break;
+					case " Aggregate":
+						BoxText.setFill(Color.GREEN);
+						System.out.println("Setting Green");
+						break;
+					case " Seq Scan":
+						BoxText.setFill(Color.ORANGE);
+						System.out.println("Setting Orange");
+						break;
+					case " Index Only Scan":
+						BoxText.setFill(Color.SALMON);
+						System.out.println("Setting Salmon");
+						break;
+					case " Index Scan":
+						BoxText.setFill(Color.PURPLE);
+						System.out.println("Setting Purple");
+						break;						
+				}
+				
 				Tooltip.install(stack, new Tooltip(stepDetail));
 				stack.getChildren().addAll(BoxRectangle, BoxText);
 				
 				StackGroup = new Group();
-				StackGroup.getChildren().addAll(stack);
 				StackGroup.setTranslateX(SceneManager.scaledX(0));
 				StackGroup.setTranslateY(SceneManager.scaledY(50));
 				
 				NodeGroup = new Group();
-				NodeGroup.setTranslateX(SceneManager.scaledX(460));
+				NodeGroup.setTranslateX(SceneManager.scaledX(200));
 				NodeGroup.setTranslateY(SceneManager.scaledY(0));
 
 				if (j != (i - 2)) {
@@ -158,29 +196,30 @@ public class Diagram {
 					Line.setStartY(0.0f);
 					Line.setEndX(0.0f);
 					Line.setEndY(50.0f);
-
+					Line. setTranslateX(SceneManager.scaledX(77));
+					
 					LineGroup = new Group();
 					LineGroup.getChildren().addAll(Line);
-					LineGroup.setTranslateX(SceneManager.scaledX(68));
-					LineGroup.setTranslateY(SceneManager.scaledY(113));
+//					LineGroup.setTranslateX(SceneManager.scaledX(0));
+					LineGroup.setTranslateY(SceneManager.scaledY(80));
 					
-					NodeGroup.getChildren().addAll(StackGroup, LineGroup);
-					
+					StackGroup.getChildren().addAll(stack, LineGroup);
+
 				} else {
-					NodeGroup.getChildren().add(StackGroup);
+					StackGroup.getChildren().add(stack);
 				}
 				
+				NodeGroup.getChildren().add(StackGroup);
 				DiagramBox.getChildren().add(NodeGroup);
 				j++;
 			}
-
-			root.getChildren().add(scrollPane);
 			
+			root.getChildren().add(scrollPane);			
 		});
 		
 		QueryButtonGroup = new Group();
 		QueryButtonGroup.getChildren().addAll(QueryButton, ResetButtonGroup);
-		QueryButtonGroup.setTranslateX(SceneManager.scaledX(530));
+		QueryButtonGroup.setTranslateX(SceneManager.scaledX(590));
 		QueryButtonGroup.setTranslateY(SceneManager.scaledY(150));
 		
 		InstructionText = new Text(instructionText);
@@ -189,8 +228,8 @@ public class Diagram {
 		
 		InstructionTextGroup = new Group();
 		InstructionTextGroup.getChildren().add(InstructionText);
-		InstructionTextGroup.setTranslateX(SceneManager.scaledX(-130));
-		InstructionTextGroup.setTranslateY(SceneManager.scaledY(500));
+		InstructionTextGroup.setTranslateX(SceneManager.scaledX(0));
+		InstructionTextGroup.setTranslateY(SceneManager.scaledY(350));
 		
 		QueryTextArea = new TextArea();
 		QueryTextArea.setId("QueryText");
@@ -200,22 +239,29 @@ public class Diagram {
 		QueryTextArea.setTranslateX(SceneManager.scaledX(-130));
 		QueryTextArea.setTranslateY(SceneManager.scaledY(50));
 		
+		HighlightedQueryGroup = new Group();
+		HighlightedQueryGroup.getChildren().addAll(textFlowPlane, InstructionTextGroup);
+		HighlightedQueryGroup.setTranslateX(SceneManager.scaledX(0));
+		HighlightedQueryGroup.setTranslateY(SceneManager.scaledY(10));
+
+		EnteredQueryText = new Text("Submitted Query: ");
+		EnteredQueryText.setId("EnteredQueryText");
+		EnteredQueryText.setStyle("-fx-font: 16 calibri;");
+		
+		EnteredQueryTextGroup = new Group();
+		EnteredQueryTextGroup.getChildren().addAll(EnteredQueryText, HighlightedQueryGroup);
+		EnteredQueryTextGroup.setTranslateX(SceneManager.scaledX(-130));
+		EnteredQueryTextGroup.setTranslateY(SceneManager.scaledY(500));
+		
 		QueryTextAreaGroup = new Group();
-		QueryTextAreaGroup.getChildren().addAll(QueryTextArea, QueryTextGroup, InstructionTextGroup, QueryButtonGroup);
+		QueryTextAreaGroup.getChildren().addAll(QueryTextArea, QueryTextGroup, EnteredQueryTextGroup,
+				QueryButtonGroup);
 		QueryTextAreaGroup.setTranslateX(SceneManager.scaledX(0));
 		QueryTextAreaGroup.setTranslateY(SceneManager.scaledY(0));
-		
-		
-//		ShowQueryText = new Text();
-//		ShowQueryText.setId("ShowQueryText");
-//		ShowQueryText.setStyle("-fx-font: 16 calibri;");
-//		ShowQueryText.setTranslateX(SceneManager.scaledX(-695));
-//		ShowQueryText.setTranslateY(SceneManager.scaledY(500));
-		
-
+	
 		QueryArea = new Group();
 		QueryArea.getChildren().add(QueryTextAreaGroup);
-		QueryArea.setTranslateX(SceneManager.scaledX(1200));
+		QueryArea.setTranslateX(SceneManager.scaledX(800));
 		QueryArea.setTranslateY(SceneManager.scaledY(100));
 
 		root.getChildren().add(QueryArea);
@@ -231,7 +277,10 @@ public class Diagram {
 			query = conn.createStatement();
 
 			String sql = "EXPLAIN (ANALYZE true, COSTS true, FORMAT json)" + QueryTextArea.getText() + ";";
-
+			String enteredQuery = new String();
+			enteredQuery = QueryTextArea.getText();
+			System.out.println("Entered query: " + enteredQuery);
+			splitSelect(enteredQuery);
 			ResultSet rs = query.executeQuery(sql);
 
 			// printing of region table
@@ -239,7 +288,13 @@ public class Diagram {
 			while (rs.next()) {
 				String postgresqlQEP = rs.getString("QUERY PLAN");
 				System.out.println(postgresqlQEP);
+				if(reset){
+					Result = "";
+					reset = false;
+				}
+				else {
 				Result = postgresqlQEP;
+				}
 			}
 
 			rs.close();
@@ -251,5 +306,255 @@ public class Diagram {
 		}
 
 		return conn;
+	}
+	
+	public void splitSelect(String textArea) {
+		
+		String text = textArea;
+		if(text.isEmpty() ){
+			return;
+		}
+		
+		boolean whereDone = false;
+		
+		textFlowPlane.setTextAlignment(TextAlignment.JUSTIFY);
+		textFlowPlane.setPrefSize(500,300);
+		textFlowPlane.setLineSpacing(5.0);
+		
+		String queryArray1[] = textArea.split("SELECT", 2);
+		String splitQuery1 = new String(queryArray1[1]);
+		System.out.println("Split Query1: " + splitQuery1);
+		Text queryText1 = new Text("SELECT");
+		textFlowPlane.getChildren().add(queryText1);
+		
+		String queryArray2[] = splitQuery1.split("FROM", 2);
+		String splitQuery2 = new String(queryArray2[0]);
+		System.out.println("Split Query2 (SELECT) : " + splitQuery2);
+		Text queryText2 = new Text(splitQuery2);
+		queryText2.setFill(Color.BLUE);
+		textFlowPlane.getChildren().add(queryText2);
+		
+		String splitQuery3 = new String(queryArray2[1]);
+		System.out.println("Split Query3: " + splitQuery3);
+		splitWhere(splitQuery3);
+		
+	}
+	
+	public void splitWhere(String textArea) {
+		String bracket = new String(") ");
+		String group = new String("GROUP BY");
+		String split = new String("split_part");
+		String where = new String("WHERE");
+		
+		
+		String queryArray3[] = textArea.split("WHERE", 2);
+		
+		if(afterBracket){
+			Text queryText3 = new Text(queryArray3[0] + "WHERE");
+			textFlowPlane.getChildren().add(queryText3);
+			afterBracket = false;
+		}
+		else {
+			Text queryText3 = new Text("FROM" + queryArray3[0] + "WHERE");
+			textFlowPlane.getChildren().add(queryText3);
+
+		}
+		
+		String splitQuery4 = new String(queryArray3[1]);
+		System.out.println("Split Query4: " + splitQuery4);
+		
+		if(splitQuery4.contains(bracket) && splitQuery4.contains(group)){
+			if(splitQuery4.indexOf(")") < splitQuery4.indexOf("GROUP BY") ) {
+				String queryArray4[] = splitQuery4.split("\\) ", 2);
+				String splitQuery5 = new String(queryArray4[0]);
+				System.out.println("Split Query5 (WHERE): " + splitQuery5);
+				
+				checkCondition(splitQuery5);
+				
+				Text queryText5 = new Text(") ");
+				textFlowPlane.getChildren().add(queryText5);
+				
+				String splitQuery6 = new String(queryArray4[1]);
+				System.out.println("Split Query6: " + splitQuery6);
+				afterBracket = true;
+				splitWhere(splitQuery6);
+				
+			}
+			else{
+				System.out.println("else is working");
+				String queryArray4[] = splitQuery4.split("GROUP BY", 2);
+				String splitQuery5 = new String(queryArray4[0]);
+				System.out.println("Split Query5 (WHERE): " + splitQuery5);
+				
+				checkCondition(splitQuery5);
+	
+				String splitQuery6 = new String(queryArray4[1]);
+				
+				if(splitQuery6.contains(where)){
+					String queryArray5[] = splitQuery6.split("\\)", 2);
+					String splitQuery7 = new String(queryArray5[0]);
+					System.out.println("Split Query7 (GROUP BY): " + splitQuery7);
+					
+					Text queryText5 = new Text("GROUP BY");
+					textFlowPlane.getChildren().add(queryText5);
+					
+					Text queryText6 = new Text(splitQuery7);
+					queryText6.setFill(Color.GREEN);
+					textFlowPlane.getChildren().add(queryText6);
+					
+					Text queryText7 = new Text(")");
+					textFlowPlane.getChildren().add(queryText7);
+					
+					String splitQuery8 = new String(queryArray5[1]);
+					afterBracket = true;
+					splitWhere(splitQuery8);
+				}
+				else {
+					System.out.println("Split Query6 (GROUP BY): " + splitQuery6);
+					
+					Text queryText5 = new Text("GROUP BY");
+					textFlowPlane.getChildren().add(queryText5);
+
+					Text queryText6 = new Text(splitQuery6);
+					queryText6.setFill(Color.GREEN);
+					textFlowPlane.getChildren().add(queryText6);
+					
+					return;
+				}
+			}
+		}
+		else if(splitQuery4.contains(bracket) && !splitQuery4.contains(group)){
+			String queryArray4[] = splitQuery4.split("\\) ", 2);
+			String splitQuery5 = new String(queryArray4[0]);
+			System.out.println("Split Query5 (WHERE): " + splitQuery5);
+			
+			checkCondition(splitQuery5);
+		
+			Text queryText5 = new Text(") ");
+			textFlowPlane.getChildren().add(queryText5);
+			
+			String splitQuery6 = new String(queryArray4[1]);
+			System.out.println("Split Query6: " + splitQuery6);
+			afterBracket = true;
+			splitWhere(splitQuery6);
+		}
+		else if (!splitQuery4.contains(bracket) && splitQuery4.contains(group)){
+			System.out.println("else2 is working");
+			String queryArray4[] = splitQuery4.split("GROUP BY", 2);
+			String splitQuery5 = new String(queryArray4[0]);
+			System.out.println("Split Query5 (WHERE): " + splitQuery5);
+			
+			checkCondition(splitQuery5);
+			
+			String splitQuery6 = new String(queryArray4[1]);
+			 
+			if(splitQuery6.contains(where)){
+				String queryArray5[] = splitQuery6.split("\\)", 2);
+				String splitQuery7 = new String(queryArray5[0]);
+				System.out.println("Split Query7 (GROUP BY): " + splitQuery7);
+				
+				Text queryText5 = new Text("GROUP BY");
+				textFlowPlane.getChildren().add(queryText5);
+				
+				Text queryText6 = new Text(splitQuery7);
+				queryText6.setFill(Color.GREEN);
+				textFlowPlane.getChildren().add(queryText6);
+				
+				Text queryText7 = new Text(")");
+				textFlowPlane.getChildren().add(queryText7);
+				
+				String splitQuery8 = new String(queryArray5[1]);
+				splitWhere(splitQuery8);
+			}
+			else {
+				System.out.println("Split Query6 (GROUP BY): " + splitQuery6);
+				
+				Text queryText5 = new Text("GROUP BY");
+				textFlowPlane.getChildren().add(queryText5);
+				
+				Text queryText6 = new Text(splitQuery6);
+				queryText6.setFill(Color.GREEN);
+				textFlowPlane.getChildren().add(queryText6);
+				
+				return;
+			}
+		}
+		else if (!splitQuery4.contains(bracket) && !splitQuery4.contains(group)){
+			System.out.println("Split Query4 (WHERE): " + splitQuery4);
+			
+			checkCondition(splitQuery4);
+			
+			return;
+		}
+		
+	}
+	
+	public void checkCondition (String queryText) {
+		String and = new String("AND");
+		String quote = new String("'");
+		String splitQuery5 = new String(queryText);
+		
+		if (splitQuery5.contains(quote)) {
+			if (splitQuery5.contains(and)) {
+				String andArray1[] = splitQuery5.split("AND", 2);
+				String andString1 = new String(andArray1[0]);
+				String andString2 = new String(andArray1[1]);
+				
+				if(!andString1.contains(quote)){
+					Text queryText4 = new Text(splitQuery5);
+					queryText4.setFill(Color.PURPLE);
+					textFlowPlane.getChildren().add(queryText4);
+				}
+				else {
+					if(andString2.contains(and)){
+						String andArray2[] = splitQuery5.split("AND", 2);
+						String andString11 = new String(andArray2[0]);
+						String andString22 = new String(andArray2[1]);
+						
+						if(!andString11.contains(quote)){
+							Text queryText4 = new Text(splitQuery5);
+							queryText4.setFill(Color.PURPLE);
+							textFlowPlane.getChildren().add(queryText4);
+						}
+						else {
+							if(!andString22.contains(quote)){
+								Text queryText4 = new Text(splitQuery5);
+								queryText4.setFill(Color.PURPLE);
+								textFlowPlane.getChildren().add(queryText4);
+							}
+							else {
+								Text queryText4 = new Text(splitQuery5);
+								queryText4.setFill(Color.ORANGE);
+								textFlowPlane.getChildren().add(queryText4);
+							}
+						}
+					}
+					else {
+						if(andString2.contains(quote)){
+							Text queryText4 = new Text(splitQuery5);
+							queryText4.setFill(Color.ORANGE);
+							textFlowPlane.getChildren().add(queryText4);
+						}
+						else {
+							Text queryText4 = new Text(splitQuery5);
+							queryText4.setFill(Color.PURPLE);
+							textFlowPlane.getChildren().add(queryText4);
+						}
+					}
+				}
+				
+			}
+			else {
+				Text queryText4 = new Text(splitQuery5);
+				queryText4.setFill(Color.ORANGE);
+				textFlowPlane.getChildren().add(queryText4);
+			}
+			
+		} 
+		else {
+			Text queryText4 = new Text(splitQuery5);
+			queryText4.setFill(Color.SALMON);
+			textFlowPlane.getChildren().add(queryText4);
+		}
 	}
 }
