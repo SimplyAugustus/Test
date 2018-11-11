@@ -1,0 +1,16 @@
+/* CSS file for application, mostly for things javaFX related */
+
+#GenText {
+	-fx-font-family: 'Lucida Sans Unicode';
+	-fx-font-size: 11pt;
+    -fx-stroke: black;
+    -fx-stroke-width: 0;	
+    
+  
+}  
+.scroll-pane > .viewport {
+   -fx-background-color: transparent;
+}
+.scroll-pane {
+   -fx-background-color: transparent;
+}
