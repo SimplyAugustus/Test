@@ -23,10 +23,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Stack;
 
 import config.AppVar;
-
+import org.json.JSONArray;
 
 public class Diagram {
 
@@ -52,7 +54,10 @@ public class Diagram {
 	private boolean reset = false;
 	private TextFlow textFlowPlane = new TextFlow();
 	private boolean afterBracket = false;
-
+	private int counter = 0;
+	private int queueSize = 0;
+	private Queue<String> queue = new LinkedList<>();
+	private JSONArray array;
 	
 	public void init(Group root) {
 		
@@ -105,45 +110,62 @@ public class Diagram {
 			scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 			scrollPane.setPannable(true); 
 			
-			
-//			ShowQueryText.setText(QueryTextArea.getText());
 			connect();
-			int i = 1;
 			int j = 1;
-
-			Result = Result.replaceAll("\"|,", "");
-			Result = Result.replaceAll("[\\[\\](){}]", "");
-			String[] ResultArray = Result.split("Node Type:");
-
-			for (String results : ResultArray) {
-				Queries.push(results);
-				System.out.println("Sentence: " + i + " " + results);
-				i++;
+			
+			try {
+				array = new JSONArray(Result);
+				 for(int k=0; k < array.length(); k++){
+			            System.out.println(array.get(k));
+			            String test = array.get(k).toString();
+			            
+			            String testArray[] = test.split("\"Plans\":", 2);
+			            String test1 = new String(testArray[0]);
+			            System.out.println("test1:" + test1);
+			            
+			            String testArray1[] = test1.split("\"Plan\":", 2);
+			            String test2 = new String(testArray1[1]);
+			            System.out.println("test2 (StringA):" + test2);
+			            String test3 = new String(testArray[1]);
+			            System.out.println("test3 (Plan + StringB):" + test3);
+			            String test4 = new String(test3.substring(0, test3.lastIndexOf("]")));
+			            splitPlans(test4);
+			            System.out.println("test4 (Plan):" + test4);
+			            String test5 = new String(test3.substring(test3.lastIndexOf("]")+2));
+			            System.out.println("test5 (StringB):" + test5);
+			            String test6 = new String(test2 + test5);
+			            System.out.println("test6 (StringA + StringB):" + test6);
+			            
+			            String testArray2[] = test6.split(",\"Execution Time", 2);
+			            String test7 = new String(testArray2[0]);
+			            test7 = test7.replaceAll("[\\[\\](){}]", "");
+						test7 = test7.replaceAll("\"", "");
+						test7 = test7.replaceAll(",", "\n");
+			            System.out.println("test7 (Refined StringA + StringB):" + test7);
+			            queue.add(test7);
+			            System.out.println("queue:\n" + queue);
+			            queueSize = queue.size();
+			            
+			        }
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-
-			while (!Queries.isEmpty()) {
+			
+			while (!queue.isEmpty()) {
 				String steps = new String();
-				steps = Queries.pop();
-				String remove1 = new String("Plans:");
-				String remove2 = new String("Plan:");
-				steps = steps.replace(remove1, "");
-				steps = steps.replace(remove2, "");
-				steps = steps.split("Planning Time")[0];
-				steps = steps.replaceAll("\\s+$", "");
-
-				// System.out.println("Step " + j + ": " + steps);
-
-				String stepNode = new String();
-				String stepDetail = new String();
-				String array[] = steps.split("\n", 2);
-				stepNode = array[0];
+				steps = queue.remove();
+				
+				String stepArray1[] = steps.split("Node Type:", 2);
+				String stepText = new String(stepArray1[1] + stepArray1[0]);
+				
+				String stepArray2[] = stepText.split("\n", 2);
+				String stepNode = new String(stepArray2[0]);
+				String stepDetail = new String(stepArray2[1]);
 
 				if (stepNode.isEmpty()) {
 					break;
 				}
-
-				stepDetail = steps.replace(stepNode, "");
-				stepDetail.replaceAll("^\\s+", "");
 				System.out.println("StepDetail " + j + ": " + stepDetail);
 
 				System.out.println("StepNode " + j + ":" + stepNode);
@@ -157,23 +179,23 @@ public class Diagram {
 				BoxText = new Text(stepNode);
 				
 				switch(stepNode) {
-					case " Sort":
+					case "Sort":
 						BoxText.setFill(Color.BLUE);
 						System.out.println("Setting Blue");
 						break;
-					case " Aggregate":
+					case "Aggregate":
 						BoxText.setFill(Color.GREEN);
 						System.out.println("Setting Green");
 						break;
-					case " Seq Scan":
+					case "Seq Scan":
 						BoxText.setFill(Color.ORANGE);
 						System.out.println("Setting Orange");
 						break;
-					case " Index Only Scan":
+					case "Index Only Scan":
 						BoxText.setFill(Color.PURPLE);
 						System.out.println("Setting Purple");
 						break;
-					case " Index Scan":
+					case "Index Scan":
 						BoxText.setFill(Color.PURPLE);
 						System.out.println("Setting Purple");
 						break;						
@@ -189,8 +211,8 @@ public class Diagram {
 				NodeGroup = new Group();
 				NodeGroup.setTranslateX(SceneManager.scaledX(200));
 				NodeGroup.setTranslateY(SceneManager.scaledY(0));
-
-				if (j != (i - 2)) {
+				
+				if (j != queueSize) {
 					Line = new Line();
 					Line.setStartX(0.0f);
 					Line.setStartY(0.0f);
@@ -551,6 +573,11 @@ public class Diagram {
 				queryText4.setFill(Color.ORANGE);
 				textFlowPlane.getChildren().add(queryText4);
 			}
+			else if(splitQuery5.contains("BETWEEN")){
+				Text queryText4 = new Text(splitQuery5);
+				queryText4.setFill(Color.ORANGE);
+				textFlowPlane.getChildren().add(queryText4);
+			}
 			else {
 				Text queryText4 = new Text(splitQuery5);
 				queryText4.setFill(Color.PURPLE);
@@ -587,6 +614,80 @@ public class Diagram {
 			Text queryText6 = new Text(splitQuery6);
 			queryText6.setFill(Color.GREEN);
 			textFlowPlane.getChildren().add(queryText6);
+		}
+	}
+	
+	public void splitPlans(String planString) {
+		 counter++;
+		 String test = new String(planString);
+		
+		 String testArray[] = test.split("\"Plans\":", 2);
+        String test1 = new String(testArray[0]);
+        System.out.println(counter + " test1 (StringA):" + test1);
+       
+        
+        if(testArray.length == 1 ){
+       	 return;
+        }
+        
+        String test3 = new String(testArray[1]);
+        System.out.println(counter + " test3 (Plan + String B):" + test3);
+        
+        String test4 = new String(test3.substring(0, test3.lastIndexOf("]")));
+        System.out.println(counter + " test4 (Plan):" + test4);
+        
+        if(test4.contains("\"Plans\":")){
+       	splitPlans(test4);
+        	counter--;
+        }
+        else {
+       	if(test4.contains(",{\"Parent Relationship\"")){
+       		System.out.print("test4 is this:" + test4);
+       		String testArray2[] = test4.split(",\\{\"Parent Relationship\"", 2);
+       		String test7 = new String(testArray2[0]);
+       		test7 = test7.replaceAll("[\\[\\](){}]", "");
+   			test7 = test7.replaceAll("\"", "");
+   			test7 = test7.replaceAll(",", "\n");
+       		System.out.println("test7 (Plan AA):" + test7);
+       		queue.add(test7 + "\n");
+       		String test8 = new String("{\"Parent Relationship\"" + testArray2[1]);
+       		test8 = test8.replaceAll("[\\[\\](){}]", "");
+   			test8 = test8.replaceAll("\"", "");
+   			test8 = test8.replaceAll(",", "\n");
+       		System.out.println("test8 (Plan BB):" + test8);
+       		queue.add(test8 + "\n");
+       	}
+       	else {
+       		test4 = test4.replaceAll("[\\[\\](){}]", "");
+   			test4 = test4.replaceAll("\"", "");
+   			test4 = test4.replaceAll(",", "\n");
+       		queue.add(test4 + "\n");
+       	}
+        }
+    	String test5 = new String(test3.substring(test3.lastIndexOf("]") + 2));
+		System.out.println(counter + " test5 (StringB):" + test5);
+		String test6 = new String(test1 + test5);
+		System.out.println(counter + " test6 (StringA + StringB):" + test6);
+		if(test6.contains(",{\"Parent Relationship\"")){
+   		String testArray3[] = test6.split(",\\{\"Parent Relationship\"", 2);
+   		String test9 = new String(testArray3[0]);
+   		test9 = test9.replaceAll("[\\[\\](){}]", "");
+			test9 = test9.replaceAll("\"", "");
+			test9 = test9.replaceAll(",", "\n");
+   		System.out.println("test9 (Plan AA):" + test9);
+   		queue.add(test9 + "\n");
+   		String test10 = new String("{\"Parent Relationship\"" + testArray3[1]);
+   		test10 = test10.replaceAll("[\\[\\](){}]", "");
+			test10 = test10.replaceAll("\"", "");
+			test10 = test10.replaceAll(",", "\n");
+   		System.out.println("test10 (Plan BB):" + test10);
+   		queue.add(test10 + "\n");
+   	}
+		else {
+			test6 = test6.replaceAll("[\\[\\](){}]", "");
+			test6 = test6.replaceAll("\"", "");
+			test6 = test6.replaceAll(",", "\n");
+			queue.add(test6 + "\n");
 		}
 	}
 }
